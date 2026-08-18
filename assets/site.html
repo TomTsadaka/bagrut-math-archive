@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ארכיון הבגרות במתמטיקה</title>
+<style>
+:root{
+  --paper:#f6f8fa; --card:#ffffff; --ink:#14202c; --muted:#5d6e80;
+  --line:#d9e1e9; --line2:#eaeff4; --accent:#1a5f8a; --accent-soft:#e7f0f7;
+  --seal:#8c3a24; --ok:#2c6b52; --ok-soft:#e6f1ec;
+  --shadow:0 1px 2px rgba(20,32,44,.06), 0 8px 24px rgba(20,32,44,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0f1720; --card:#16202b; --ink:#e4ecf3; --muted:#94a6b8;
+    --line:#25333f; --line2:#1d2833; --accent:#6ea9cf; --accent-soft:#16303f;
+    --seal:#cd7f66; --ok:#5aa384; --ok-soft:#142b23;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f1720; --card:#16202b; --ink:#e4ecf3; --muted:#94a6b8;
+  --line:#25333f; --line2:#1d2833; --accent:#6ea9cf; --accent-soft:#16303f;
+  --seal:#cd7f66; --ok:#5aa384; --ok-soft:#142b23;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Assistant","Heebo","Rubik","Noto Sans Hebrew",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:16px; line-height:1.6; direction:rtl;
+}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+/* ---------- כותרת ---------- */
+header{border-bottom:1px solid var(--line);background:var(--card)}
+.head{padding:38px 0 26px;display:flex;flex-wrap:wrap;gap:26px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);
+  font-weight:700;margin:0 0 8px}
+h1{margin:0;font-size:clamp(28px,4.4vw,42px);font-weight:800;letter-spacing:-.02em;
+  text-wrap:balance;line-height:1.15}
+.sub{margin:10px 0 0;color:var(--muted);max-width:56ch}
+.figures-note{margin-top:6px;font-size:14px;color:var(--muted)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;min-width:280px}
+.stat{background:var(--card);padding:12px 14px}
+.stat b{display:block;font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+.stat span{font-size:11px;color:var(--muted);letter-spacing:.04em}
+
+/* ---------- מסננים ---------- */
+.filters{position:sticky;top:0;z-index:20;background:var(--card);
+  border-bottom:1px solid var(--line);box-shadow:var(--shadow)}
+.frow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{appearance:none;border:0;background:var(--card);color:var(--muted);
+  padding:7px 13px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  border-inline-start:1px solid var(--line)}
+.seg button:first-child{border-inline-start:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+select,input[type=search]{font:inherit;font-size:13px;padding:7px 11px;border:1px solid var(--line);
+  border-radius:8px;background:var(--card);color:var(--ink)}
+input[type=search]{min-width:190px}
+.count{margin-inline-start:auto;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* ---------- תקופות ---------- */
+.era{margin:34px 0 0}
+.era-head{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;
+  padding-bottom:8px;border-bottom:2px solid var(--seal)}
+.era-head h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}
+.era-years{font-size:13px;color:var(--seal);font-weight:700}
+.era-note{font-size:13px;color:var(--muted);margin-inline-start:auto}
+
+/* ---------- שנים ושורות ---------- */
+.year{margin-top:18px}
+.year-label{font-size:13px;font-weight:700;color:var(--muted);padding:4px 0;
+  border-bottom:1px solid var(--line2);margin-bottom:8px;letter-spacing:.02em}
+.rows{display:grid;gap:6px}
+.row{display:grid;grid-template-columns:auto auto 1fr auto;gap:12px;align-items:center;
+  background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 13px}
+.code{font-size:14px;font-weight:700;color:var(--accent)}
+.badge{font-size:11px;font-weight:800;padding:3px 8px;border-radius:5px;
+  background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.badge.u5{background:var(--seal);color:#fff}
+.meta{font-size:13px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.links{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.lnk{font-size:12px;font-weight:700;text-decoration:none;padding:4px 9px;border-radius:6px;
+  border:1px solid var(--line);color:var(--ink);white-space:nowrap}
+.lnk:hover{border-color:var(--accent);color:var(--accent)}
+.lnk.sol{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.lnk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.missing{font-size:12px;color:var(--muted);opacity:.7}
+
+/* ---------- הדגמה ---------- */
+.demo{margin:46px 0 0;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:22px 24px;box-shadow:var(--shadow)}
+.demo h2{margin:0 0 4px;font-size:19px;font-weight:800}
+.demo .sub{margin-bottom:18px;font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.tag{font-size:12px;padding:3px 10px;border-radius:99px;background:var(--accent-soft);
+  color:var(--accent);font-weight:700}
+.tag.d{background:var(--seal);color:#fff}
+.tag.n{background:transparent;border:1px solid var(--line);color:var(--muted);font-weight:600}
+.qbody{margin:0 0 14px;white-space:pre-wrap}
+.part{border-inline-start:3px solid var(--line);padding-inline-start:14px;margin:14px 0}
+.part-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.part-h b{color:var(--seal);font-size:15px}
+.fig{margin:12px 0;padding:12px;border:1px solid var(--line2);border-radius:9px;
+  background:var(--paper);text-align:center}
+.fig img{max-width:min(300px,100%);height:auto;display:inline-block}
+.fig figcaption{font-size:12px;color:var(--muted);margin-top:8px}
+.skills{font-size:13px;color:var(--muted);border-top:1px solid var(--line2);padding-top:12px;margin-top:14px}
+.mth{font-family:"Cambria Math","Latin Modern Math",Georgia,serif;direction:ltr;
+  display:inline-block;unicode-bidi:isolate}
+.frac{display:inline-flex;flex-direction:column;vertical-align:-.5em;text-align:center;
+  font-size:.9em;margin:0 .15em}
+.frac .num{border-bottom:1.2px solid currentColor;padding:0 .25em}
+.frac .den{padding:0 .25em}
+.sqrt{border-top:1.2px solid currentColor;padding:0 .15em}
+
+footer{margin:50px 0 0;border-top:1px solid var(--line);background:var(--card)}
+.foot{padding:22px 0 34px;font-size:13px;color:var(--muted)}
+.foot b{color:var(--ink)}
+.empty{text-align:center;color:var(--muted);padding:46px}
+@media (max-width:640px){
+  .row{grid-template-columns:auto auto 1fr;row-gap:8px}
+  .links{grid-column:1/-1}
+  .era-note{width:100%;margin-inline-start:0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<style>
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);background:var(--card)}
+.tabs button{appearance:none;border:0;background:none;color:var(--muted);font:inherit;
+  font-weight:700;font-size:15px;padding:14px 18px;cursor:pointer;border-bottom:3px solid transparent}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.figs{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.figs img{max-width:250px;height:auto;border:1px solid var(--line);border-radius:8px;
+  background:#fff;padding:6px}
+.qcard{background:var(--card);border:1px solid var(--line);border-radius:11px;
+  padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow)}
+.loading{text-align:center;color:var(--muted);padding:60px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap head">
+    <div>
+      <p class="eyebrow">2001–2026 · משרד החינוך + ארכיון האינטרנט</p>
+      <h1>ארכיון הבגרות במתמטיקה</h1>
+      <p class="sub">כל שאלוני הבגרות במתמטיקה שאותרו ברשת, ממוינים לפי תוכנית לימודים,
+        רמה ומועד — עם קישור ישיר לשאלון ולפתרון הרשמי.</p>
+      <p class="figures-note" id="fignote"></p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </div>
+</header>
+
+<div class="filters">
+  <div class="wrap frow">
+    <div class="seg" role="group" aria-label="רמת לימוד">
+      <button data-u="" aria-pressed="true">הכל</button>
+      <button data-u="3" aria-pressed="false">3 יח״ל</button>
+      <button data-u="4" aria-pressed="false">4 יח״ל</button>
+      <button data-u="5" aria-pressed="false">5 יח״ל</button>
+    </div>
+    <select id="moed"><option value="">כל המועדים</option></select>
+    <select id="year"><option value="">כל השנים</option></select>
+    <label class="seg"><button id="solonly" data-on="0" aria-pressed="false">רק עם פתרון רשמי</button></label>
+    <input type="search" id="q" placeholder="חיפוש לפי מספר שאלון…" aria-label="חיפוש שאלון">
+    <span class="count" id="count"></span>
+  </div>
+</div>
+
+<div class="tabs wrap" role="tablist">
+  <button id="tab-papers" role="tab" aria-selected="true">שאלונים</button>
+  <button id="tab-questions" role="tab" aria-selected="false">מאגר השאלות</button>
+</div>
+<main class="wrap">
+  <div id="list"></div>
+  <div id="qlist" class="hidden"></div>
+</main>
+
+<footer><div class="wrap foot" id="foot"></div></footer>
+
+<script>
+let PAPERS = [], QUESTIONS = [], STATS = {};
+const ERAS = [
+  ["חדשה","תוכנית הלימודים החדשה","תשפ״ד ואילך","שאלונים 171/172, 371/372, 471/472, 571/572"],
+  ["רפורמה","רפורמת 2015","תשע״ה–תשפ״ג","שאלונים 181/182, 381/382, 481/482, 581/582"],
+  ["ישנה","התוכנית הישנה","עד תשע״ה","שאלונים 801–807 והמספור התלת-ספרתי 311–317"]
+];
+
+const el = i => document.getElementById(i);
+const esc = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+
+const B = String.fromCharCode(92);
+const SYM = {'cdot':'·','times':'×','div':'÷','leq':'≤','le':'≤','geq':'≥','ge':'≥',
+ 'neq':'≠','ne':'≠','pm':'±','infty':'∞','alpha':'α','beta':'β','gamma':'γ','theta':'θ',
+ 'pi':'π','lambda':'λ','mu':'μ','Delta':'Δ','angle':'∠','perp':'⊥','parallel':'∥',
+ 'in':'∈','to':'→','Rightarrow':'⇒','approx':'≈','sin':'sin','cos':'cos','tan':'tan',
+ 'log':'log','ln':'ln','left':'','right':''};
+function tex(t){
+  let x = esc(t);
+  x = x.replace(new RegExp(B+B+'frac\\s*\\{([^{}]*)\\}\\s*\\{([^{}]*)\\}','g'),
+    (m,a,b)=>'<span class="frac"><span class="num">'+a+'</span><span class="den">'+b+'</span></span>');
+  x = x.replace(new RegExp(B+B+'sqrt\\s*\\{([^{}]*)\\}','g'),
+    (m,a)=>'√<span class="sqrt">'+a+'</span>');
+  Object.keys(SYM).sort((a,b)=>b.length-a.length).forEach(k=>{ x = x.split(B+k).join(SYM[k]); });
+  x = x.replace(/\^\{([^{}]*)\}/g,'<sup>$1</sup>').replace(/\^(\w)/g,'<sup>$1</sup>');
+  x = x.replace(/_\{([^{}]*)\}/g,'<sub>$1</sub>').replace(/_(\w)/g,'<sub>$1</sub>');
+  return '<span class="mth">'+x.split('{').join('').split('}').join('')+'</span>';
+}
+function md(s){
+  if(!s) return '';
+  return String(s).split(/(\$[^$]*\$)/g).map(p =>
+    (p.startsWith('$') && p.endsWith('$') && p.length>2) ? tex(p.slice(1,-1))
+      : esc(p).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+  ).join('');
+}
+
+let TAB = 'papers';
+let F = { units:'', moed:'', year:'', sol:false, q:'' };
+
+function rowHTML(p){
+  const links = [];
+  if (p.question_url) links.push('<a class="lnk" href="'+esc(p.question_url)+'" target="_blank" rel="noopener">שאלון</a>');
+  if (p.solution_url) links.push('<a class="lnk sol" href="'+esc(p.solution_url)+'" target="_blank" rel="noopener">פתרון רשמי</a>');
+  else links.push('<span class="missing">אין פתרון רשמי</span>');
+  return '<div class="row">'
+    + '<span class="code mono">'+esc(p.code)+'</span>'
+    + '<span class="badge'+(p.units===5?' u5':'')+'">'+(p.units||'?')+' יח״ל</span>'
+    + '<span class="meta">'+esc(p.moed||'')+'</span>'
+    + '<span class="links">'+links.join('')+'</span></div>';
+}
+
+function qcardHTML(x){
+  const figs = (x.figures||[]).length
+    ? '<div class="figs">'+x.figures.map(f=>'<img src="'+esc(f)+'" alt="שרטוט מתוך השאלה" loading="lazy">').join('')+'</div>'
+    : '';
+  const parts = (x.parts||[]).map(p =>
+    '<div class="part"><div class="part-h"><b>סעיף '+esc(p.letter)+'</b>'
+    + (p.topic?'<span class="tag n">'+esc(p.topic)+'</span>':'')
+    + (p.difficulty?'<span class="tag n">קושי '+p.difficulty+'</span>':'')
+    + (p.points?'<span class="tag n">'+p.points+' נק׳</span>':'')
+    + '</div><div class="qbody">'+md(p.body)+'</div></div>').join('');
+  return '<div class="qcard"><div class="tags">'
+    + '<span class="tag">'+esc(x.topic||'—')+'</span>'
+    + '<span class="tag d">קושי '+(x.difficulty??'—')+'</span>'
+    + '<span class="tag n">'+x.year+'</span>'
+    + '<span class="tag n mono">'+esc(x.code)+'</span>'
+    + '<span class="tag n">'+(x.units||'?')+' יח״ל</span>'
+    + (x.moed?'<span class="tag n">'+esc(x.moed)+'</span>':'')
+    + (x.points?'<span class="tag n">'+x.points+' נק׳</span>':'')
+    + '</div>'
+    + figs
+    + '<div class="qbody">'+md(x.body)+'</div>'
+    + parts
+    + ((x.skills||[]).length?'<div class="skills"><b>מיומנויות:</b> '+esc(x.skills.join(' · '))+'</div>':'')
+    + '</div>';
+}
+
+function renderPapers(){
+  const out = PAPERS.filter(p =>
+      (!F.units || String(p.units)===F.units) &&
+      (!F.moed  || p.moed===F.moed) &&
+      (!F.year  || String(p.year)===F.year) &&
+      (!F.sol   || !!p.solution_url) &&
+      (!F.q     || String(p.code).includes(F.q)));
+  el('count').textContent = out.length.toLocaleString('he-IL') + ' שאלונים';
+  if (!out.length){ el('list').innerHTML = '<div class="empty">לא נמצאו שאלונים מתאימים</div>'; return; }
+  let html = '';
+  for (const [key, name, span, note] of ERAS){
+    const inEra = out.filter(p => p.program === key);
+    if (!inEra.length) continue;
+    html += '<section class="era"><div class="era-head"><h2>'+esc(name)+'</h2>'
+          + '<span class="era-years">'+esc(span)+'</span>'
+          + '<span class="era-note">'+esc(note)+'</span></div>';
+    const byYear = {};
+    inEra.forEach(p => (byYear[p.year] = byYear[p.year] || []).push(p));
+    Object.keys(byYear).sort((a,b)=>b-a).forEach(y => {
+      html += '<div class="year"><div class="year-label">'+y
+            + ' <span style="font-weight:400">· '+byYear[y].length+' שאלונים</span></div>'
+            + '<div class="rows">' + byYear[y].map(rowHTML).join('') + '</div></div>';
+    });
+    html += '</section>';
+  }
+  el('list').innerHTML = html;
+}
+
+function renderQuestions(){
+  const out = QUESTIONS.filter(x =>
+      (!F.units || String(x.units)===F.units) &&
+      (!F.moed  || x.moed===F.moed) &&
+      (!F.year  || String(x.year)===F.year) &&
+      (!F.q     || (x.body||'').includes(F.q) || String(x.code).includes(F.q)
+                || (x.skills||[]).join(' ').includes(F.q)
+                || (x.topic||'').includes(F.q)));
+  el('count').textContent = out.length.toLocaleString('he-IL') + ' שאלות';
+  el('qlist').innerHTML = out.length
+    ? out.map(qcardHTML).join('')
+    : '<div class="empty">אין עדיין שאלות מחולצות שמתאימות לסינון.<br>'
+      + 'שלב החילוץ ממלא את המאגר משאלוני ה-PDF.</div>';
+}
+
+function render(){ TAB === 'papers' ? renderPapers() : renderQuestions(); }
+
+function switchTab(t){
+  TAB = t;
+  el('tab-papers').setAttribute('aria-selected', t==='papers');
+  el('tab-questions').setAttribute('aria-selected', t==='questions');
+  el('list').classList.toggle('hidden', t!=='papers');
+  el('qlist').classList.toggle('hidden', t!=='questions');
+  el('solonly').style.display = t==='papers' ? '' : 'none';
+  el('q').placeholder = t==='papers' ? 'חיפוש לפי מספר שאלון…' : 'חיפוש בנוסח, נושא או מיומנות…';
+  render();
+}
+
+async function boot(){
+  const [p, q, s] = await Promise.all([
+    fetch('data/papers.json').then(r=>r.json()),
+    fetch('data/questions.json').then(r=>r.json()).catch(()=>[]),
+    fetch('data/stats.json').then(r=>r.json()).catch(()=>({})),
+  ]);
+  PAPERS = p; QUESTIONS = q; STATS = s;
+
+  el('stats').innerHTML = [
+    ['שאלונים', STATS.papers], ['ירדו', STATS.fetched],
+    ['עם פתרון', STATS.with_solution], ['שרטוטים', STATS.figures]
+  ].map(([k,v]) => '<div class="stat"><b class="mono">'+(v??0)+'</b><span>'+k+'</span></div>').join('');
+  el('fignote').textContent = STATS.figures
+    ? Number(STATS.figures).toLocaleString('he-IL') + ' שרטוטים חולצו אוטומטית מתוך השאלונים.' : '';
+
+  const moadim = [...new Set(PAPERS.map(x=>x.moed).filter(Boolean))].sort();
+  el('moed').insertAdjacentHTML('beforeend', moadim.map(m=>'<option>'+esc(m)+'</option>').join(''));
+  const years = [...new Set(PAPERS.map(x=>x.year))].sort((a,b)=>b-a);
+  el('year').insertAdjacentHTML('beforeend', years.map(y=>'<option>'+y+'</option>').join(''));
+
+  document.querySelectorAll('.seg button[data-u]').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.seg button[data-u]').forEach(x => x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true'); F.units = b.dataset.u; render();
+  }));
+  el('solonly').addEventListener('click', () => {
+    F.sol = !F.sol; el('solonly').setAttribute('aria-pressed', F.sol?'true':'false'); render();
+  });
+  el('moed').addEventListener('change', e => { F.moed = e.target.value; render(); });
+  el('year').addEventListener('change', e => { F.year = e.target.value; render(); });
+  el('q').addEventListener('input', e => { F.q = e.target.value.trim(); render(); });
+  el('tab-papers').addEventListener('click', ()=>switchTab('papers'));
+  el('tab-questions').addEventListener('click', ()=>switchTab('questions'));
+
+  el('foot').innerHTML = '<b>מקורות:</b> ה-API של משרד החינוך (2011 ואילך, כולל פתרונות רשמיים) '
+    + 'וארכיון האינטרנט (2001–2010). הקישורים מובילים לקבצים המקוריים באתר משרד החינוך. '
+    + 'שנת 2000 אינה זמינה ברשת.';
+
+  switchTab('papers');
+}
+boot();
+</script>
+</body>
+</html>

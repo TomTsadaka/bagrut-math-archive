@@ -1,0 +1,9 @@
+cache/
+data/bagrut.db*
+exports/figures/
+exports/questions.json
+exports/artifact.html
+exports/viewer.html
+logs_*.txt
+venv/
+__pycache__/
