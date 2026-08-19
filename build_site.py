@@ -5,7 +5,7 @@
 מקבצי JSON נפרדים, והשרטוטים מוגשים כקבצים — כך זה מתרחב לאלפי שאלות.
 """
 import json, os, shutil, sys
-import db, figures
+import db, figures, topic_tag, fix_encoding
 
 SITE = os.path.join(os.path.dirname(__file__), "site")
 
@@ -92,10 +92,14 @@ def build(include_all_figures=False):
                     continue
                 shutil.copy2(src, os.path.join(SITE, "q", q["file"]))
                 n_img += 1
+                txt = q.get("text", "")
+                if fix_encoding.is_broken(txt):
+                    txt = fix_encoding.repair(txt)
                 scanned.append({
                     "id": pid + "_q" + q["number"], "paper_id": pid,
                     "number": q["number"], "img": "q/" + q["file"],
-                    "w": q["w"], "h": q["h"], "text": q.get("text", ""),
+                    "w": q["w"], "h": q["h"], "text": txt,
+                    "topics": topic_tag.tag(txt),
                     "year": m["year"], "code": m["code"], "units": m["units"],
                     "program": m["program"], "moed": m["moed"],
                     "solution_url": m["solution_url"],
@@ -107,6 +111,7 @@ def build(include_all_figures=False):
 
     stats = db.stats(con)
     stats["scanned"] = len(scanned)
+    stats["tagged"] = sum(1 for x in scanned if x.get("topics"))
     stats["with_solution"] = con.execute(
         "SELECT COUNT(*) FROM papers WHERE solution_url IS NOT NULL").fetchone()[0]
     json.dump(stats, open(os.path.join(SITE, "data", "stats.json"), "w", encoding="utf-8"),
