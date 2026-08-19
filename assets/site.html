@@ -150,6 +150,53 @@ footer{margin:50px 0 0;border-top:1px solid var(--line);background:var(--card)}
 .sol summary:hover{filter:brightness(1.06)}
 .sol summary:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
 .solimg{margin-top:10px;max-width:520px}
+
+/* בחירה לדף עבודה */
+.pick{appearance:none;border:1px solid var(--line);border-radius:7px;background:var(--card);
+  color:var(--muted);font:inherit;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer}
+.pick:hover{border-color:var(--accent);color:var(--accent)}
+.pick[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.qcard.picked{outline:2px solid var(--accent);outline-offset:2px}
+
+/* סרגל דף העבודה */
+.tray{position:fixed;inset-inline:0;bottom:0;z-index:60;background:var(--card);
+  border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(0,0,0,.14);
+  transform:translateY(110%);transition:transform .18s ease}
+.tray.on{transform:none}
+@media (prefers-reduced-motion:reduce){.tray{transition:none}}
+.tray-in{max-width:1080px;margin:0 auto;padding:12px 20px;display:flex;gap:10px;
+  align-items:center;flex-wrap:wrap}
+.tray b{font-size:15px}
+.tray .grow{margin-inline-start:auto;display:flex;gap:8px;flex-wrap:wrap}
+.tray button{appearance:none;border:1px solid var(--line);border-radius:8px;background:var(--card);
+  color:var(--ink);font:inherit;font-size:13px;font-weight:700;padding:8px 15px;cursor:pointer}
+.tray button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tray button:hover{border-color:var(--accent)}
+.tray label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+
+/* תצוגת ההדפסה */
+#sheet{display:none}
+#sheet.on{display:block;background:#fff;color:#000;padding:26px 30px}
+#sheet .sh-head{border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:18px}
+#sheet h2{margin:0;font-size:21px}
+#sheet .sh-sub{font-size:13px;color:#444;margin-top:4px}
+#sheet .sh-q{page-break-inside:avoid;margin-bottom:22px}
+#sheet .sh-n{font-weight:800;font-size:14px;margin-bottom:6px}
+#sheet .sh-src{font-size:11px;color:#555;margin-bottom:6px}
+#sheet img{max-width:100%;height:auto;display:block}
+#sheet .sh-ans{page-break-before:always;border-top:2px solid #000;padding-top:12px}
+.back{position:sticky;top:0;z-index:70;background:var(--card);border-bottom:1px solid var(--line);
+  padding:10px 20px;display:none}
+.back.on{display:block}
+.back button{appearance:none;border:1px solid var(--line);border-radius:8px;background:var(--card);
+  color:var(--ink);font:inherit;font-weight:700;padding:8px 15px;cursor:pointer;margin-inline-end:8px}
+
+@media print{
+  header,.filters,.tray,.back,footer,#qlist{display:none!important}
+  #sheet.on{display:block;padding:0}
+  body{background:#fff}
+  @page{margin:14mm}
+}
 .filters select:disabled{opacity:.5;cursor:not-allowed}
 .modebtn{appearance:none;border:1px solid var(--line);border-radius:8px;background:var(--card);
   color:var(--muted);font:inherit;font-size:13px;font-weight:600;padding:7px 13px;cursor:pointer}
@@ -204,10 +251,23 @@ footer{margin:50px 0 0;border-top:1px solid var(--line);background:var(--card)}
   </div>
 </div>
 
+<div class="back" id="back">
+  <button id="backBtn">← חזרה למאגר</button>
+  <button id="printBtn" class="primary">הדפסה / שמירה כ-PDF</button>
+</div>
+<div id="sheet"></div>
 <main class="wrap">
   <div id="qlist"><div class="loading">טוען…</div></div>
 </main>
 
+<div class="tray" id="tray"><div class="tray-in">
+  <b id="trayCount">0 שאלות נבחרו</b>
+  <label><input type="checkbox" id="withAns"> לצרף פתרונות</label>
+  <span class="grow">
+    <button id="clearSel">נקה</button>
+    <button id="makeSheet" class="primary">צור דף עבודה</button>
+  </span>
+</div></div>
 <footer><div class="wrap foot" id="foot"></div></footer>
 <script>
 let QUESTIONS = [], SCANS = [], STATS = {};
@@ -273,7 +333,8 @@ function card(x){
 }
 
 function scanCard(x){
-  return '<article class="qcard scan">'
+  const on = SEL.has(x.id);
+  return '<article class="qcard scan'+(on?' picked':'')+'" data-id="'+esc(x.id)+'">'
     + '<div class="tags">'
     + '<span class="tag n">שאלה '+esc(x.number)+'</span>'
     + '<span class="tag">'+x.year+'</span>'
@@ -283,6 +344,8 @@ function scanCard(x){
     + (x.solution_url?'<a class="tag sol" target="_blank" rel="noopener" href="'
         +esc(x.solution_url)+'">פתרון רשמי ↗</a>':'')
     + (x.topics||[]).map(t=>'<span class="tag">'+esc(t)+'</span>').join('')
+    + '<button class="pick" data-pick="'+esc(x.id)+'" aria-pressed="'+(on?'true':'false')+'">'
+    + (on?'✓ נבחרה':'+ לדף עבודה') + '</button>'
     + '</div>'
     + '<img class="qimg" src="'+esc(x.img)+'" alt="שאלה '+esc(x.number)+'" loading="lazy">'
     + (x.sol ? '<details class="sol"><summary>הצג פתרון רשמי</summary>'
@@ -422,7 +485,73 @@ async function boot(){
     + 'הנוסח, השרטוטים והסיווג חולצו אוטומטית מקובצי ה-PDF המקוריים.';
   render();
 }
-boot();
+// ===== דף עבודה =====
+const SEL = new Set(JSON.parse(localStorage.getItem('bagrut_sel') || '[]'));
+
+function saveSel(){
+  localStorage.setItem('bagrut_sel', JSON.stringify([...SEL]));
+  const n = SEL.size;
+  el('trayCount').textContent = n + (n === 1 ? ' שאלה נבחרה' : ' שאלות נבחרו');
+  el('tray').classList.toggle('on', n > 0);
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-pick]');
+  if (!b) return;
+  const id = b.dataset.pick;
+  SEL.has(id) ? SEL.delete(id) : SEL.add(id);
+  const on = SEL.has(id);
+  b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  b.textContent = on ? '✓ נבחרה' : '+ לדף עבודה';
+  b.closest('.qcard').classList.toggle('picked', on);
+  saveSel();
+});
+
+function buildSheet(){
+  const chosen = SCANS.filter(x => SEL.has(x.id));
+  if (!chosen.length) return;
+  const withAns = el('withAns').checked;
+  const today = new Date().toLocaleDateString('he-IL');
+  const levels = [...new Set(chosen.map(x=>x.units).filter(Boolean))].sort();
+  let h = '<div class="sh-head"><h2>דף עבודה במתמטיקה</h2>'
+        + '<div class="sh-sub">' + chosen.length + ' שאלות'
+        + (levels.length ? ' · ' + levels.join(', ') + ' יח״ל' : '')
+        + ' · ' + today + '</div></div>';
+  chosen.forEach((x, i) => {
+    h += '<div class="sh-q"><div class="sh-n">שאלה ' + (i+1) + '</div>'
+       + '<div class="sh-src">בגרות ' + x.year + ' · שאלון ' + esc(x.code)
+       + ' · ' + esc(x.moed||'') + ' · שאלה ' + esc(x.number) + '</div>'
+       + '<img src="' + esc(x.img) + '" alt=""></div>';
+  });
+  const ans = chosen.filter(x => x.sol);
+  if (withAns && ans.length){
+    h += '<div class="sh-ans"><h2>פתרונות</h2>';
+    chosen.forEach((x, i) => {
+      if (!x.sol) return;
+      h += '<div class="sh-q"><div class="sh-n">שאלה ' + (i+1) + '</div>'
+         + '<img src="' + esc(x.sol) + '" alt=""></div>';
+    });
+    h += '</div>';
+  }
+  el('sheet').innerHTML = h;
+  el('sheet').classList.add('on');
+  el('back').classList.add('on');
+  el('tray').classList.remove('on');
+  window.scrollTo(0, 0);
+}
+
+el('makeSheet').addEventListener('click', buildSheet);
+el('printBtn').addEventListener('click', () => window.print());
+el('backBtn').addEventListener('click', () => {
+  el('sheet').classList.remove('on');
+  el('back').classList.remove('on');
+  saveSel();
+});
+el('clearSel').addEventListener('click', () => {
+  SEL.clear(); saveSel(); render();
+});
+
+boot().then(saveSel);
 </script>
 </body>
 </html>
