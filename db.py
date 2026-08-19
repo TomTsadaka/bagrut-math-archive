@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS questions (
   solution      TEXT,               -- פתרון רשמי אם נמצא
   confidence    REAL,
   cluster_id    TEXT,               -- לזיהוי שאלות חוזרות
+  figure_files  TEXT,               -- JSON: שיוך מפורש של שרטוטים לשאלה
   raw           TEXT                -- JSON גולמי מהמודל
 );
 
@@ -109,7 +110,7 @@ def upsert_question(con, q):
     cols = ["question_id","paper_id","number","chapter","body","points","n_parts",
             "has_figure","page_from","page_to","topic","subtopics","difficulty","qtype",
             "skills","est_minutes","needs_formula_sheet","solution","confidence",
-            "cluster_id","raw"]
+            "cluster_id","figure_files","raw"]
     vals = []
     for c in cols:
         v = q.get(c)

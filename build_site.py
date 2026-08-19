@@ -46,7 +46,17 @@ def build(include_all_figures=False):
             except Exception: q[k] = []
         q.pop("raw", None)
         q["parts"] = sorted(parts.get(q["question_id"], []), key=lambda x: x.get("letter") or "")
-        fl = figs_by_page.get((q["paper_id"], q.get("page_from")), [])
+        # שיוך מפורש גובר על ניחוש לפי מספר עמוד
+        explicit = q.pop("figure_files", None)
+        try:
+            explicit = json.loads(explicit) if isinstance(explicit, str) else explicit
+        except Exception:
+            explicit = None
+        if explicit:
+            by_name = {f: p for v in figs_by_page.values() for f, p in v}
+            fl = [(f, by_name[f]) for f in explicit if f in by_name]
+        else:
+            fl = figs_by_page.get((q["paper_id"], q.get("page_from")), [])
         q["figures"] = ["figures/" + f for f, _ in fl]
         needed.update(fl)
         questions.append(q)

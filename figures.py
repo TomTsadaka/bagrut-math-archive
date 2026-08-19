@@ -71,6 +71,9 @@ def _with_labels(page, box):
             grown = grown | r
     return grown
 
+def _key(r):
+    return (round(r.x0, 1), round(r.y0, 1), round(r.x1, 1), round(r.y1, 1))
+
 def _score(page, box, paths):
     """מאפייני האשכול, לצורך הבחנה בין שרטוט אמיתי למסגרת/חותמת."""
     inside = [p for p in paths if box.intersects(p["rect"])]
@@ -103,6 +106,15 @@ def detect(page):
     if not seeds:
         return []
     boxes = _merge(seeds)
+    # תמונות רסטר מוטמעות (צילומים, איורים סרוקים) הן שרטוטים לכל דבר,
+    # והן אינן נתיבים וקטוריים — לכן נאספות בנפרד
+    for img in page.get_images(full=True):
+        try:
+            for r in page.get_image_rects(img[0]):
+                if (r.x1 - r.x0) >= MIN_W and (r.y1 - r.y0) >= MIN_H:
+                    boxes.append(fitz.Rect(r))
+        except Exception:
+            pass
     rules = [p["rect"] for p in paths if _is_rule(p["rect"])]
     for i, b in enumerate(boxes):
         for r in rules:
@@ -111,6 +123,13 @@ def detect(page):
             if grown.intersects(r):
                 boxes[i] = boxes[i] | r
                 b = boxes[i]
+    is_raster = {}
+    for img in page.get_images(full=True):
+        try:
+            for r in page.get_image_rects(img[0]):
+                is_raster[_key(fitz.Rect(r))] = True
+        except Exception:
+            pass
     keep = []
     for b in boxes:
         if (b.x1 - b.x0) < MIN_W or (b.y1 - b.y0) < MIN_H:
@@ -120,6 +139,12 @@ def detect(page):
             continue
         n_paths, items, curves, n_text = _score(page, b, paths)
         if n_paths > MAX_PATHS:
+            continue
+        if is_raster.get(_key(b)):
+            b = _with_labels(page, b)
+            b = fitz.Rect(max(0, b.x0 - PAD), max(0, b.y0 - PAD),
+                          min(page.rect.x1, b.x1 + PAD), min(page.rect.y1, b.y1 + PAD))
+            keep.append(b)
             continue
         # מסגרת ריקה או חותמת: נתיב בודד עם פריט או שניים
         if items <= 2:
