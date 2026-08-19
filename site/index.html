@@ -142,6 +142,7 @@ footer{margin:50px 0 0;border-top:1px solid var(--line);background:var(--card)}
 .qimg{width:100%;height:auto;display:block;border-radius:8px;background:#fff;
   border:1px solid var(--line)}
 .qcard.scan{padding:14px}
+.filters select:disabled{opacity:.5;cursor:not-allowed}
 .modebtn{appearance:none;border:1px solid var(--line);border-radius:8px;background:var(--card);
   color:var(--muted);font:inherit;font-size:13px;font-weight:600;padding:7px 13px;cursor:pointer}
 .modebtn:hover{border-color:var(--accent);color:var(--accent)}
@@ -341,18 +342,31 @@ async function boot(){
   el('year').insertAdjacentHTML('beforeend', years.map(y=>'<option>'+y+'</option>').join(''));
 
   const ALL = [...SCANS, ...QUESTIONS];
-  // השאלונים מקובצים לפי רמה כדי שהרשימה תהיה קריאה
-  const codes = [...new Set(ALL.map(x=>String(x.code)).filter(Boolean))];
-  const byUnits = {};
-  codes.forEach(c => {
-    const u = (ALL.find(x=>String(x.code)===c)||{}).units || '?';
-    (byUnits[u] = byUnits[u] || []).push(c);
-  });
-  el('code').insertAdjacentHTML('beforeend',
-    Object.keys(byUnits).sort((a,b)=>b-a).map(u =>
-      '<optgroup label="'+u+' יח״ל">'
-      + byUnits[u].sort().map(c=>'<option>'+esc(c)+'</option>').join('')
-      + '</optgroup>').join(''));
+
+  // רשימת השאלונים תלויה ברמה שנבחרה: בלי רמה אין מה להציג
+  function populateCodes(){
+    const sel = el('code');
+    if (!F.units){
+      sel.innerHTML = '<option value="">בחרו קודם רמה</option>';
+      sel.disabled = true;
+      sel.title = 'בחרו מספר יחידות לימוד כדי לראות את השאלונים';
+      return;
+    }
+    const codes = [...new Set(
+      ALL.filter(x => String(x.units) === F.units)
+         .map(x => String(x.code)).filter(Boolean)
+    )].sort();
+    const counts = {};
+    codes.forEach(c => {
+      counts[c] = ALL.filter(x => String(x.code) === c && String(x.units) === F.units).length;
+    });
+    sel.disabled = false;
+    sel.title = '';
+    sel.innerHTML = '<option value="">כל השאלונים ב-' + F.units + ' יח״ל</option>'
+      + codes.map(c => '<option value="' + esc(c) + '">' + esc(c)
+                  + ' (' + counts[c] + ')</option>').join('');
+  }
+  populateCodes();
 
   const moadim = [...new Set(ALL.map(x=>x.moed).filter(Boolean))].sort();
   el('moed').insertAdjacentHTML('beforeend',
@@ -363,7 +377,11 @@ async function boot(){
 
   document.querySelectorAll('.seg button[data-u]').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('.seg button[data-u]').forEach(x => x.setAttribute('aria-pressed','false'));
-    b.setAttribute('aria-pressed','true'); F.units = b.dataset.u; SHOWN = 30; render();
+    b.setAttribute('aria-pressed','true');
+    F.units = b.dataset.u;
+    F.code = '';              // שאלון של רמה אחרת אינו רלוונטי עוד
+    populateCodes();
+    SHOWN = 30; render();
   }));
   el('figonly').addEventListener('click', () => {
     F.fig = !F.fig; el('figonly').setAttribute('aria-pressed', F.fig?'true':'false');
