@@ -7,3 +7,7 @@ exports/viewer.html
 logs_*.txt
 venv/
 __pycache__/
+exports/questions_img/
+site/q/
+site/figures/
+site/data/scans.json

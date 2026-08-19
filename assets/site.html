@@ -139,6 +139,17 @@ footer{margin:50px 0 0;border-top:1px solid var(--line);background:var(--card)}
 .qcard{background:var(--card);border:1px solid var(--line);border-radius:11px;
   padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow)}
 .qnum{font-size:13px;font-weight:800;color:var(--muted);letter-spacing:.04em;margin-bottom:8px}
+.qimg{width:100%;height:auto;display:block;border-radius:8px;background:#fff;
+  border:1px solid var(--line)}
+.qcard.scan{padding:14px}
+.modebtn{appearance:none;border:1px solid var(--line);border-radius:8px;background:var(--card);
+  color:var(--muted);font:inherit;font-size:13px;font-weight:600;padding:7px 13px;cursor:pointer}
+.modebtn:hover{border-color:var(--accent);color:var(--accent)}
+.tag.sol{background:var(--ok-soft);color:var(--ok);text-decoration:none;font-weight:700}
+.more{text-align:center;padding:18px}
+.more button{appearance:none;border:1px solid var(--line);border-radius:9px;background:var(--card);
+  color:var(--accent);font:inherit;font-weight:700;padding:11px 22px;cursor:pointer}
+.more button:hover{border-color:var(--accent)}
 .loading{text-align:center;color:var(--muted);padding:70px}
 .note{background:var(--accent-soft);border:1px solid var(--line);border-radius:10px;
   padding:16px 18px;margin:22px 0;color:var(--ink);font-size:14px;line-height:1.7}
@@ -177,6 +188,7 @@ footer{margin:50px 0 0;border-top:1px solid var(--line);background:var(--card)}
     <button class="seg" id="figonly" data-on="0" aria-pressed="false"
       style="padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);background:var(--card)">רק עם שרטוט</button>
     <input type="search" id="q" placeholder="חיפוש בנוסח, נושא או מיומנות…" aria-label="חיפוש">
+    <button id="mode" class="modebtn">מסווגות בלבד</button>
     <span class="count" id="count"></span>
   </div>
 </div>
@@ -187,7 +199,7 @@ footer{margin:50px 0 0;border-top:1px solid var(--line);background:var(--card)}
 
 <footer><div class="wrap foot" id="foot"></div></footer>
 <script>
-let QUESTIONS = [], STATS = {};
+let QUESTIONS = [], SCANS = [], STATS = {};
 const el = i => document.getElementById(i);
 const esc = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
 
@@ -217,6 +229,8 @@ function md(s){
 }
 
 let F = { units:'', topic:'', diff:'', year:'', fig:false, q:'' };
+let MODE = 'scan';      // scan = שאלות כתמונה, data = שאלות מסווגות
+let SHOWN = 30;
 
 function card(x){
   const figs = (x.figures||[]).length
@@ -247,7 +261,39 @@ function card(x){
     + '</article>';
 }
 
+function scanCard(x){
+  return '<article class="qcard scan">'
+    + '<div class="tags">'
+    + '<span class="tag n">שאלה '+esc(x.number)+'</span>'
+    + '<span class="tag">'+x.year+'</span>'
+    + '<span class="tag n mono">'+esc(x.code)+'</span>'
+    + '<span class="tag n">'+(x.units||'?')+' יח״ל</span>'
+    + (x.moed?'<span class="tag n">'+esc(x.moed)+'</span>':'')
+    + (x.solution_url?'<a class="tag sol" target="_blank" rel="noopener" href="'
+        +esc(x.solution_url)+'">פתרון רשמי ↗</a>':'')
+    + '</div>'
+    + '<img class="qimg" src="'+esc(x.img)+'" alt="שאלה '+esc(x.number)+'" loading="lazy">'
+    + '</article>';
+}
+
 function render(){
+  if (MODE === 'scan'){
+    const o = SCANS.filter(x =>
+      (!F.units || String(x.units)===F.units) &&
+      (!F.year  || String(x.year)===F.year) &&
+      (!F.q     || (x.text||'').includes(F.q) || String(x.code).includes(F.q)));
+    el('count').textContent = o.length.toLocaleString('he-IL') + ' שאלות';
+    const page = o.slice(0, SHOWN);
+    el('qlist').innerHTML = page.length
+      ? page.map(scanCard).join('')
+        + (o.length > SHOWN ? '<div class="more"><button id="more">הצג עוד '
+           + Math.min(60, o.length-SHOWN) + ' שאלות (מתוך '
+           + (o.length-SHOWN).toLocaleString('he-IL') + ')</button></div>' : '')
+      : '<div class="empty">לא נמצאו שאלות מתאימות.</div>';
+    const mb = document.getElementById('more');
+    if (mb) mb.addEventListener('click', ()=>{ SHOWN += 60; render(); });
+    return;
+  }
   const out = QUESTIONS.filter(x =>
       (!F.units || String(x.units)===F.units) &&
       (!F.topic || x.topic===F.topic) &&
@@ -267,16 +313,18 @@ function render(){
 }
 
 async function boot(){
-  const [q, s] = await Promise.all([
+  const [q, sc, s] = await Promise.all([
     fetch('data/questions.json').then(r=>r.json()).catch(()=>[]),
+    fetch('data/scans.json').then(r=>r.json()).catch(()=>[]),
     fetch('data/stats.json').then(r=>r.json()).catch(()=>({})),
   ]);
-  QUESTIONS = q; STATS = s;
+  QUESTIONS = q; SCANS = sc; STATS = s;
 
-  const withFig = QUESTIONS.filter(x=>(x.figures||[]).length).length;
   el('stats').innerHTML = [
-    ['שאלות', QUESTIONS.length], ['עם שרטוט', withFig],
-    ['שאלונים', STATS.papers||0], ['שרטוטים', STATS.figures||0]
+    ['שאלות', SCANS.length.toLocaleString('he-IL')],
+    ['מסווגות', QUESTIONS.length],
+    ['שאלונים', STATS.papers||0],
+    ['שנים', (STATS.year_min||'')+'–'+(STATS.year_max||'')]
   ].map(([k,v]) => '<div class="stat"><b class="mono">'+v+'</b><span>'+k+'</span></div>').join('');
 
   const topics = [...new Set(QUESTIONS.map(x=>x.topic).filter(Boolean))].sort();
@@ -286,7 +334,7 @@ async function boot(){
 
   document.querySelectorAll('.seg button[data-u]').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('.seg button[data-u]').forEach(x => x.setAttribute('aria-pressed','false'));
-    b.setAttribute('aria-pressed','true'); F.units = b.dataset.u; render();
+    b.setAttribute('aria-pressed','true'); F.units = b.dataset.u; SHOWN = 30; render();
   }));
   el('figonly').addEventListener('click', () => {
     F.fig = !F.fig; el('figonly').setAttribute('aria-pressed', F.fig?'true':'false');
@@ -294,11 +342,21 @@ async function boot(){
     el('figonly').style.color = F.fig ? '#fff' : 'var(--muted)';
     render();
   });
-  el('topic').addEventListener('change', e => { F.topic = e.target.value; render(); });
-  el('diff').addEventListener('change',  e => { F.diff  = e.target.value; render(); });
-  el('year').addEventListener('change',  e => { F.year  = e.target.value; render(); });
-  el('q').addEventListener('input',      e => { F.q     = e.target.value.trim(); render(); });
+  el('topic').addEventListener('change', e => { F.topic = e.target.value; SHOWN = 30; render(); });
+  el('diff').addEventListener('change',  e => { F.diff  = e.target.value; SHOWN = 30; render(); });
+  el('year').addEventListener('change',  e => { F.year  = e.target.value; SHOWN = 30; render(); });
+  el('q').addEventListener('input',      e => { F.q     = e.target.value.trim(); SHOWN = 30; render(); });
 
+  el('mode').addEventListener('click', ()=>{
+    MODE = (MODE === 'scan') ? 'data' : 'scan';
+    el('mode').textContent = (MODE === 'scan') ? 'מסווגות בלבד' : 'כל השאלות';
+    el('topic').style.display = MODE==='data' ? '' : 'none';
+    el('diff').style.display  = MODE==='data' ? '' : 'none';
+    el('figonly').style.display = MODE==='data' ? '' : 'none';
+    SHOWN = 30; render();
+  });
+  el('topic').style.display='none'; el('diff').style.display='none';
+  el('figonly').style.display='none';
   el('foot').innerHTML = '<b>מקור:</b> שאלוני הבגרות של משרד החינוך. '
     + 'הנוסח, השרטוטים והסיווג חולצו אוטומטית מקובצי ה-PDF המקוריים.';
   render();

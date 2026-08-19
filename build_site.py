@@ -73,7 +73,40 @@ def build(include_all_figures=False):
             shutil.copy2(path, os.path.join(SITE, "figures", fname))
             n_copied += 1
 
+    # --- שאלות חתוכות כתמונה (ללא מודל שפה) ---
+    crop_path = os.path.join(os.path.dirname(__file__), "data", "cropped_questions.json")
+    scanned = []
+    if os.path.exists(crop_path):
+        cropped = json.load(open(crop_path, encoding="utf-8"))
+        meta = {r["paper_id"]: dict(r) for r in con.execute(
+            "SELECT paper_id, code, year, units, program, moed, solution_url FROM papers")}
+        os.makedirs(os.path.join(SITE, "q"), exist_ok=True)
+        n_img = 0
+        for pid, qs in cropped.items():
+            m = meta.get(pid)
+            if not m:
+                continue
+            for q in qs:
+                src = os.path.join(os.path.dirname(__file__), "exports", "questions_img", q["file"])
+                if not os.path.exists(src):
+                    continue
+                shutil.copy2(src, os.path.join(SITE, "q", q["file"]))
+                n_img += 1
+                scanned.append({
+                    "id": pid + "_q" + q["number"], "paper_id": pid,
+                    "number": q["number"], "img": "q/" + q["file"],
+                    "w": q["w"], "h": q["h"], "text": q.get("text", ""),
+                    "year": m["year"], "code": m["code"], "units": m["units"],
+                    "program": m["program"], "moed": m["moed"],
+                    "solution_url": m["solution_url"],
+                })
+        print(f"    שאלות כתמונה: {n_img}")
+    scanned.sort(key=lambda x: (-x["year"], x["code"], int(x["number"] or 0)))
+    json.dump(scanned, open(os.path.join(SITE, "data", "scans.json"), "w", encoding="utf-8"),
+              ensure_ascii=False, separators=(",", ":"))
+
     stats = db.stats(con)
+    stats["scanned"] = len(scanned)
     stats["with_solution"] = con.execute(
         "SELECT COUNT(*) FROM papers WHERE solution_url IS NOT NULL").fetchone()[0]
     json.dump(stats, open(os.path.join(SITE, "data", "stats.json"), "w", encoding="utf-8"),
