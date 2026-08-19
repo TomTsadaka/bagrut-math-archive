@@ -11,3 +11,5 @@ exports/questions_img/
 site/q/
 site/figures/
 site/data/scans.json
+exports/solutions_img/
+site/s/

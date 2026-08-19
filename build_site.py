@@ -10,6 +10,18 @@ import db, figures, topic_tag, fix_encoding
 SITE = os.path.join(os.path.dirname(__file__), "site")
 
 
+def _sol_for(sols, paper_id, number, site):
+    """מעתיק את תמונת הפתרון לאתר ומחזיר את הנתיב היחסי."""
+    for e in sols.get(paper_id, []):
+        if e["number"] == number:
+            src = os.path.join(os.path.dirname(__file__), "exports",
+                               "solutions_img", e["file"])
+            if os.path.exists(src):
+                shutil.copy2(src, os.path.join(site, "s", e["file"]))
+                return "s/" + e["file"]
+    return None
+
+
 def build(include_all_figures=False):
     con = db.connect()
     os.makedirs(os.path.join(SITE, "data"), exist_ok=True)
@@ -74,6 +86,10 @@ def build(include_all_figures=False):
             n_copied += 1
 
     # --- שאלות חתוכות כתמונה (ללא מודל שפה) ---
+    sol_path = os.path.join(os.path.dirname(__file__), "data", "cropped_solutions.json")
+    sols = json.load(open(sol_path, encoding="utf-8")) if os.path.exists(sol_path) else {}
+    if sols:
+        os.makedirs(os.path.join(SITE, "s"), exist_ok=True)
     crop_path = os.path.join(os.path.dirname(__file__), "data", "cropped_questions.json")
     scanned = []
     if os.path.exists(crop_path):
@@ -100,6 +116,7 @@ def build(include_all_figures=False):
                     "number": q["number"], "img": "q/" + q["file"],
                     "w": q["w"], "h": q["h"], "text": txt,
                     "topics": topic_tag.tag(txt),
+                    "sol": _sol_for(sols, pid, q["number"], SITE),
                     "year": m["year"], "code": m["code"], "units": m["units"],
                     "program": m["program"], "moed": m["moed"],
                     "solution_url": m["solution_url"],
@@ -112,6 +129,7 @@ def build(include_all_figures=False):
     stats = db.stats(con)
     stats["scanned"] = len(scanned)
     stats["tagged"] = sum(1 for x in scanned if x.get("topics"))
+    stats["with_sol"] = sum(1 for x in scanned if x.get("sol"))
     stats["with_solution"] = con.execute(
         "SELECT COUNT(*) FROM papers WHERE solution_url IS NOT NULL").fetchone()[0]
     json.dump(stats, open(os.path.join(SITE, "data", "stats.json"), "w", encoding="utf-8"),

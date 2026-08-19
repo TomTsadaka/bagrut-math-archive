@@ -142,6 +142,14 @@ footer{margin:50px 0 0;border-top:1px solid var(--line);background:var(--card)}
 .qimg{width:100%;height:auto;display:block;border-radius:8px;background:#fff;
   border:1px solid var(--line)}
 .qcard.scan{padding:14px}
+.sol{margin-top:10px}
+.sol summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--ok);
+  padding:8px 12px;background:var(--ok-soft);border-radius:8px;list-style:none;
+  display:inline-block}
+.sol summary::-webkit-details-marker{display:none}
+.sol summary:hover{filter:brightness(1.06)}
+.sol summary:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
+.solimg{margin-top:10px;max-width:520px}
 .filters select:disabled{opacity:.5;cursor:not-allowed}
 .modebtn{appearance:none;border:1px solid var(--line);border-radius:8px;background:var(--card);
   color:var(--muted);font:inherit;font-size:13px;font-weight:600;padding:7px 13px;cursor:pointer}
@@ -277,6 +285,8 @@ function scanCard(x){
     + (x.topics||[]).map(t=>'<span class="tag">'+esc(t)+'</span>').join('')
     + '</div>'
     + '<img class="qimg" src="'+esc(x.img)+'" alt="שאלה '+esc(x.number)+'" loading="lazy">'
+    + (x.sol ? '<details class="sol"><summary>הצג פתרון רשמי</summary>'
+             + '<img class="qimg solimg" src="'+esc(x.sol)+'" alt="פתרון" loading="lazy"></details>' : '')
     + '</article>';
 }
 
@@ -332,7 +342,7 @@ async function boot(){
   el('stats').innerHTML = [
     ['שאלות', SCANS.length.toLocaleString('he-IL')],
     ['מתויגות', (STATS.tagged||0).toLocaleString('he-IL')],
-    ['שאלונים', STATS.papers||0],
+    ['עם פתרון', (STATS.with_sol||0).toLocaleString('he-IL')],
     ['שנים', (STATS.year_min||'')+'–'+(STATS.year_max||'')]
   ].map(([k,v]) => '<div class="stat"><b class="mono">'+v+'</b><span>'+k+'</span></div>').join('');
 
